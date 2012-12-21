@@ -1,8 +1,0 @@
-System Call 0x30
---Cette ligne, et les suivantes ci-dessous, seront ignorées--
-
-M    kern/kernel
-M    kern/idt.c
-M    kern/kernel.c
-M    kern/int.asm
-M    kern/Makefile

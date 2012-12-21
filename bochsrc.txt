@@ -6,7 +6,7 @@ boot: a
 plugin_ctrl: unmapped=1
 magic_break: enabled=1
 #plugin_ctrl: serial=1
-display_library: x#, options="gui_debug"
+display_library: sdl #x#, options="gui_debug"
 port_e9_hack: enabled=1
 #com1: enabled=1, mode=term, dev=/dev/ttyS0
 #display_library: sdl
