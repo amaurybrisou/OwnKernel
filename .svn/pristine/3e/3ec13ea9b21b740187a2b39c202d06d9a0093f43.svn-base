@@ -1,0 +1,18 @@
+OBJ=kernel
+CC=gcc -Wall -Ilib/
+
+
+all: $(OBJ) 
+
+kernel: kernel.o screen.o lib.o gdt.o idt.o interrupt.o int.o pic.o syscalls.o mm.o serial.o io.o
+	ld --oformat binary -Ttext 1000 $^ -o $@
+
+int.o: int.asm
+	nasm -f elf -o $@ $^ 
+
+
+.o: .c 
+	$(CC) -c $^
+
+clean:
+	rm -f $(OBJ) *.o

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd kern
+svn commit
+cd ../boot
+svn commit

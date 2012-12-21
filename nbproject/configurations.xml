@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="84">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df name="OwnKernel" root=".">
+      <df name="boot">
+        <in>bootsect.asm</in>
+      </df>
+      <df name="kern">
+        <df name="lib">
+          <in>gdt.h</in>
+          <in>idt.h</in>
+          <in>io.h</in>
+          <in>kbd.h</in>
+          <in>kheap.h</in>
+          <in>malloc.h</in>
+          <in>mm.h</in>
+          <in>paging.h</in>
+          <in>screen.h</in>
+          <in>serial.h</in>
+          <in>types.h</in>
+        </df>
+        <in>gdt.c</in>
+        <in>idt.c</in>
+        <in>int.asm</in>
+        <in>interrupt.c</in>
+        <in>io.c</in>
+        <in>kernel.c</in>
+        <in>kheap.c</in>
+        <in>lib.c</in>
+        <in>mm.c</in>
+        <in>pic.c</in>
+        <in>screen.c</in>
+        <in>serial.c</in>
+        <in>syscalls.c</in>
+      </df>
+    </df>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceFolderFilter>^(nbproject)$</sourceFolderFilter>
+  <sourceRootList>
+    <Elem>.</Elem>
+    <Elem>kern/lib</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
+        <compilerSet>default</compilerSet>
+      </toolsSet>
+      <codeAssistance>
+      </codeAssistance>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>${MAKE} -f Makefile</buildCommand>
+          <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
+          <executablePath></executablePath>
+        </makeTool>
+      </makefileType>
+    </conf>
+  </confs>
+</configurationDescriptor>
