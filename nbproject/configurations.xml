@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="84">
+<configurationDescriptor version="80">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df name="OwnKernel" root=".">
       <df name="boot">
@@ -53,8 +53,6 @@
         <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
         <compilerSet>default</compilerSet>
       </toolsSet>
-      <codeAssistance>
-      </codeAssistance>
       <makefileType>
         <makeTool>
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
@@ -63,6 +61,89 @@
           <executablePath></executablePath>
         </makeTool>
       </makefileType>
+      <item path="boot/bootsect.asm" ex="true" tool="4" flavor="0">
+      </item>
+      <item path="kern/gdt.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="kern/idt.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="kern/int.asm" ex="true" tool="4" flavor="0">
+      </item>
+      <item path="kern/interrupt.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="kern/io.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="kern/kernel.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="kern/lib.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="kern/lib/paging.h" ex="true" tool="3" flavor="0">
+      </item>
+      <item path="kern/mm.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="kern/pic.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="kern/screen.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="kern/serial.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="kern/syscalls.c" ex="false" tool="0" flavor="0">
+        <cTool>
+          <incDir>
+            <pElem>kern/lib</pElem>
+          </incDir>
+        </cTool>
+      </item>
     </conf>
   </confs>
 </configurationDescriptor>
