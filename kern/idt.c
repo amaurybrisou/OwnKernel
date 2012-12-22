@@ -46,7 +46,7 @@ void init_idt(void)
        	//init_idt_desc(0x08, (u32) _asm_irq_4, INTGATE, &kidt[36]);	/* serial port com1 */
        	//init_idt_desc(0x08, (u32) _asm_irq_9, INTGATE, &kidt[40]);	/* NIC  */
 
-	init_idt_desc(0x08, (u32) _asm_syscalls, TRAPGATE, &kidt[23]);	/* apperls systèmes 0x30 */
+	init_idt_desc(0x08, (u32) _asm_syscalls, TRAPGATE, &kidt[23]);	/* appels systèmes 0x30 */
         
        
         

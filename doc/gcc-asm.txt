@@ -1,0 +1,314 @@
+Instructions assembleur avec des opérandes exprimés en C
+
+Dans une instruction assembleur utilisant 'asm' vous pouvez spécifier
+les opérandes d'une instruction en utilisant des expressions en C. Cela
+signifie que vous n'avez pas besoin de deviner quels registres ou emplacements
+mémoire contiendront les données que vous voulez utiliser.
+
+Vous devez spécifier un modèle d'instruction assembleur de la même manière que
+ça apparaît dans la description d'un processeur, plus une chaîne de contrainte
+d'opérande, pour chaque opérande.
+
+Par exemple, voici comment utiliser l'instruction `fsinx' du 68881:
+
+asm (
+	"fsinx %1,%0"
+	: "=f" (resultat)
+	: "f" (angle)
+); 
+
+Ici 'angle' est l'expression C pour l'opérande d'entrée tandis que 'resultat'
+est celle de l'opérande de sortie. Chacune a `"f"' comme contrainte d'opérande,
+disant qu'un registre flottant est requis. Le '=' dans '=f' indique que l'opérande
+est une sortie; toute contrainte d'opérande de sortie doit utiliser '='. Les
+contraintes utilisent le même langage utilisé dans la description du processeur.
+(Constraints). 
+
+Chaque opérande est décrit par une chaîne de contrainte d'opérande suivie par
+l'expression C entre parenthèses. Un deux-points sépare le modèle assembleur
+du premier opérande de sortie, et un autre sépare le dernier opérande de sortie
+du premier d'entrée, si besoin est. Des virgules séparent les opérandes dans
+chaque groupe. Le nombre total d'opérandes est actuellement limité à 30; cette
+limitation pourrait être levée dans une future version de GCC.
+
+S'il n'y a pas d'opérande de sortie, mais qu'il y a des opérandes d'entrée, vous
+devez placer deux deux-point consécutifs encadrant l'emplacement où se trouveraient
+les opérandes de sortie.
+
+A partir de GCC version 3.1, il est aussi possible de spécifier les opérandes
+d'entrée et de sortie en utilisant des noms symboliques qui peuvent être référencés
+dans le code assembleur. Ces noms doivent être spécifiés entre crochets précédant
+la chaîne de contrainte, et peuvent être référencés dans le code assembleur en
+utilisant '%[NOM]' au lieu du signe pourcent suivi du numéro d'opérande.
+En utilisant des opérandes nommés, l'exemple ci-dessus pourrait ressembler à ceci:
+
+asm (
+	"fsinx %[angle],%[sortie]" 
+	: [sortie] "=f" (resultat) 
+	: [angle] "f" (angle)
+); 
+
+Notez que les noms symboliques d'opérandes n'ont aucune relation avec les autres
+identifiants C. Vous pouvez utilisez n'importe quel nom que vous voulez, même ceux
+de symboles C existants, mais vous devez vous assurer que deux opérandes dans la
+même structure assembleur n'utilisent pas le même nom symbolique.
+
+Les expressions des opérandes de sortie doivent être des valeurs-l; le compilateur
+peut vérifier cela. Les opérandes d'entrée n'ont pas besoin de l'être. Le
+compilateur ne peut pas vérifier si les opérandes ont un type de données qui est
+raisonnable pour l'instruction qui sera executée. Il ne parse pas le modèle
+d'instruction assembleur et ne sait pas ce que ça signifie, où s'il s'agit
+d'assembleur valide ou non. La caractéristique d' 'asm' étendu est plus souvent
+utilisé pour les instructions machine que le compilateur lui-même ne connait pas.
+Si l'expression de sortie ne peut pas être directement adressée (par exemple, c'est
+un champ de bits), votre contrainte doit allouer un registre. Dans ce cas, GCC
+utilisera un registre pour la sortie de cet 'asm', et stockera ce registre dans
+la sortie.
+
+Les opérandes ordinaires de sortie doivent être en écriture seulement; GCC assumera
+que les valeurs dans ces opérandes avant l'instruction sont morts et n'ont pas
+besoin d'être générés. L'assembleur étendu supporte les opérandes d'entrée-sortie
+ou de lecture-écriture. Utilisez le caractère de contrainte '+' pour indiquer un
+tel opérande et le lister dans les opérandes de sortie.
+
+Quand les contraintes pour l'opérande de lecture-écriture (ou l'opérande dans
+lequel seuls quelques bits sont changés) autorise un registre, vous pouvez, comme
+alternative, logiquement séparer sa fonction en deux opérandes séparés, un opérande
+d'entrée et un opérande de sortie en écriture seule. La connection entre les deux
+est exprimée par les contraintes disant qu'ils ont besoin de se trouver dans le
+même emplacement pendant l'exécution de l'instruction. Vous pouvez utiliser la
+même expression C pour les deux opérandes, ou des expressions différentes. Par
+exemple, ici nous écrivons l'instruction (fictive) 'combiner' avec 'bar' comme
+opérande d'entrée en lecture-seule, et 'foo' en tant que destination en
+lecture-écriture:
+
+asm (
+	"combiner %2,%0"
+	: "=r" (foo)
+	: "0" (foo), "g" (bar)
+); 
+
+La contrainte `"0"' pour l'opérande 1 dit qu'il doit occuper le même emplacement
+que l'opérande 0. Un nombre dans une contrainte n'est autorisé que dans un opérande
+d'entrée, et doit se référer à un opérande de sortie. 
+
+Seul un numéro dans une contrainte peut garantir qu'un opérande se trouvera à la
+même place qu'un autre. Le fait que 'foo' ait la valeur de deux opérandes n'est pas
+suffisant pour garantir qu'ils seront à la même place dans le code assembleur
+généré. L'exemple suivant ne serait pas fiable:
+
+asm (
+	"combiner %2,%0"
+	: "=r" (foo)
+	: "r" (foo), "g" (bar)
+); 
+
+Des optimisations variées ou le rechargement pourraient causer les opérandes 0 et 1
+à se trouver dans des registres différents; GCC n'a aucune raison de ne pas le
+faire. Par exemple, le compilateur pourrait trouver une copie de la valeur de 'foo'
+dans un registre différent et l'utiliser pour l'opérande 1, mais générer l'opérande
+de sortie 0 dans un registre différent (le copiant ensuite à la propre adresse de
+'foo'). Bien sûr, puisque le registre pour l'opérande 1 n'est même pas mentionné
+dans le code assembleur, le résultat ne fonctionnera pas, mais GCC ne peux pas
+le dire.
+
+A partir de GCC version 3.1, on peut écrire '[NOM]' au lieu du numéro d'opérande
+pour une contrainte correspondante. Par exemple:
+
+asm (
+	"cmoveq %1,%2,%[resultat]" 
+	: [resultat] "=r"(resultat) 
+	: "r" (test), "r"(nouveau), "[resultat]"(ancien)
+); 
+
+Des instructions peuvent polluer des registres spécifiques. Pour le décrire,
+écrivez un troisième deux-points après les opérandes d'entrée, suivi par les noms
+des registres pollués (données dans des chaînes). Voici un exemple réaliste pour
+le VAX:
+
+asm volatile (
+	"movc3 %0,%1,%2" 
+	: /* pas de sortie */ 
+	: "g" (source), "g" (destination), "g" (quantite) 
+	: "r0", "r1", "r2", "r3", "r4", "r5"
+); 
+
+Vous ne devriez pas écrire une description de pollution d'une manière qui
+passerait sur un opérande d'entrée ou de sortie. Par exemple, vous ne devriez pas
+avoir un opérande décrivant une classe de registre avec un membre si vous
+mentionnez ce registre dans la liste de pollution. Les variables déclarées se
+trouver dans des registres spécifiques (Explicit Reg Vars), et utilisées comme
+opérandes d'entrées ou de sortie assembleur ne doivent pas être mentionnées dans la
+description de pollution. Il n'y a aucun moyen pour vous de spécifier qu'un
+opérande d'entrée est modifié sans le spécifier aussi comme opérande de sortie.
+Notez que si tous les opérandes de sortie que vous spécifiez sont pour cet usage
+(et donc inutilisés), vous aurez aussi besoin de spécifier comme 'volatile' la
+structure 'asm', comme décrit ci-dessus, pour empêcher GCC, de considérer la
+structure entière comme inutilisée, et donc la supprimer.
+
+Si vous référencez un registre particulier dans le code assembleur, vous aurez
+à le lister après le troisième deux-points, pour dire que la valeur de ce registre
+a été modifiée. Dans certains assembleurs, les noms de registre commencent par '%';
+pour produire un '%' dans le code assembleur, vous devez écrire '%%' dans le
+source.
+
+Si votre instruction assembleur peut altérer le registre des codes de condition,
+ajouter 'cc' à la liste des registres pollués. GCC sur certaines machines
+représente les codes de condition dans un registre spécifique; 'cc' sert à nommer
+ce registre. Sur d'autres machines, les codes de condition sont gérés différemment,
+et spécifier 'cc' n'a aucun effet. Mais c'est valide quelque soit la machine.
+
+Si votre instruction assembleur modifie la mémoire de manière imprévisible, ajoutez
+'memory' à la liste des registres pollués. Ceci forcera GCC à ne pas garder cachées
+dans des registres des valeurs de la mémoire, après l'exécution de l'instruction
+assembleur. Vous voudrez aussi ajouter le mot-clé 'volatile' si la mémoire affectée
+n'est pas listée dans les entrées et sortie de l' 'asm', car le mot-clé 'memory'
+ne compte pas comme effet de bord de l' 'asm'.
+
+Vous pouvez mettre plusieurs instructions assembleur ensemble dans un modèle 'asm',
+séparés par les caractères normalement utilisés dans le code assembleur pour le
+système. Une combinaison qui fonctionne dans la plupart des cas est une nouvelle
+ligne pour passer à la suivante, plus un caractère de tabulation pour aller au
+prochain champ d'instruction (écrit comme '\n\t'). Quelquefois, des points-virgule
+peuvent être utilisés, si l'assembleur autorise le point-virgule comme caractère de
+séparation des lignes. Notez que certains dialectes assembleurs utilisent le
+point-virgule pour démarrer un commentaire. Les opérandes d'entrée sont garantis de
+n'utiliser aucun registre pollué, de même pour les adresses des opérandes de
+sortie, ainsi vous pouvez lire et écrire les registres pollués autant de fois que
+vous voulez. Voici un exemple d'instructions multiples dans un modèle; il assume
+que la sous-routine 'foo' accepte des arguments dans les registres 9 et 10.
+
+asm (
+	"movl %0,r9\n\t" \
+	"movl %1,r10\n\t" \
+	"call _foo" 
+	: /* pas de sortie */ 
+	: "g" (source), "g" (destination) 
+	: "r9", "r10"
+); 
+
+A moins qu'un opérande de sortie n'ait la contrainte de modification '&', GCC
+pourrait l'allouer dans le même registre que celui d'un opérande d'entrée
+indépendant, en considérant que les entrées sont consommées avant que les sorties
+soit produites. Cette assertion pourrait être fausse si le code assembleur consiste
+en plus d'une instruction. Dans un tel cas, utiliser '&' pour que chaque opérande
+de sortie ne recouvre pas une entrée. (Modifiers). 
+
+Si vous voulez tester les codes de condition produits par une instruction
+assembleur, vous devez inclure un branchement et une étiquette dans la structure
+'asm', comme suit: 
+
+asm (
+	"clr %0\n\t" \
+	"frob %1\n\t" \
+	"beq 0f\n\t" \
+	"mov #1,%0\n" \
+	"0:" 
+	: "g" (resultat) 
+	: "g" (entree)
+); 
+
+Cela considère que votre assembleur supporte les étiquettes locales, comme
+l'assembleur GNU et la plupart des assembleurs Unix font.
+
+En parlant des étiquettes, les sauts d'un 'asm' à un autre ne sont pas supportés.
+Les optimiseurs du compilateur ne reconnaissent pas ces sauts, et donc ne peuvent
+pas les prendre en compte en décidant comment optimiser.
+
+Généralement, la manière la plus convenable d'utiliser ces instructions 'asm' est
+de les encapsuler dans des macros qui ressemblent à des fonctions. Par exemple,
+
+#define sin(x)	\ 
+	({ \
+		double __valeur, __argument = (x);	\ 
+		\
+		asm (	\
+			"fsinx %1,%0" \
+			: "=f" (__valeur)	\
+			: "f" (__argument)	\
+		);  \ 
+		__valeur;	\
+	}) 
+
+Ici la variable '__argument' est utilisé pour s'assurer que l'instruction opère
+réellement sur une valeur 'double', et d'accepter seulement les arguments 'x'
+qui peuvent se convertir automatiquement en 'double'.
+
+Un autre moyen d'être sûr que l'instruction opère sur le type de données correct
+est d'utiliser un cast dans l' 'asm'. C'est différent du fait d'utiliser une
+variable '__argument' car il peut convertir plus de types différents. Par exemple,
+si le type désiré est 'int', convertir l'argument en 'int' accepterais un pointeur
+sans complainte, alors qu'assigner l'argument vers une variable __argument de type
+'int' avertirait de l'utilisation d'un pointeur à moins que l'appelant l'ait
+explicitement converti.
+
+Si un 'asm' a des opérandes de sortie, GCC considère pour l'optimisation que
+l'instruction n'a aucun effet de bord, sauf dans le changement des opérandes de
+sortie. Cela ne signifie pas que les instructions sans effet de bord ne peuvent pas
+être utilisées, mais que vous devez faire attention, parce que le compilateur
+pourrait les éliminer si les opérandes de sortie ne sont pas utilisés, ou les
+placer en dehors des boucles, ou en remplacer deux par une s'ils ont une
+sous-expression commune. Ainsi, si votre instruction a un effet de bord sur une
+variable qui autrement ne devrait pas changer, l'ancienne valeur de la variable
+peut être réutilisée plus tard si elle est trouvée dans un registre.
+
+Vous pouvez empêcher une instruction 'asm' d'être supprimée, déplacée ou combinée
+en utilisant le mot-clé 'volatile' après le 'asm'. Par exemple;
+
+#define lire_et_fixer_priorite(nouveau)	\ 
+	({	\
+		int __ancien;	\ 
+		\
+		asm volatile (	\
+			"lire_et_fixer_priorite %0, %1" \ 
+			: "=g" (__ancien)	\
+			: "g" (nouveau)	\
+		);	\ 
+		__ancien;	\
+	}) 
+
+Si vous écriver une instruction 'asm' sans sorties, GCC saura que l'instruction a
+des effets de bord, et n'effacera pas l'instruction ou ne la déplacera pas en
+dehors des boucles.
+
+Le mot-clé 'volatile' indique que l'instruction a d'importants effets de bord. GCC
+n'effacera pas un 'asm' volatile s'il est atteignable. (L'instruction pourra être
+supprimée si GCC peut prouver que le flux de contrôle n'atteindra jamais
+l'instruction.) En plus, GCC ne réordonnera pas des instructions à travers un
+'asm' volatile. Par exemple:
+
+*(volatile int *)addr = foo; 
+asm volatile ("eieio" : : ); 
+
+Considère que 'addr' contient l'adresse du registre d'un périphérique mappé en
+mémoire. L'instruction PowerPC 'eieio' (Enforce In-order Execution of I/O) dit
+au CPU de s'assurer que le stockage dans le registre de périphérique se produit
+avant qu'il n'effectue d'autres E/S.
+
+Notez que même une instruction 'asm' volatile peut être déplacée de manière
+insignifiante par le compilateur, à travers des instructions de saut. Vous ne
+pouvez pas considérer qu'une séquence d'instructions d' 'asm' volatiles se produira
+de manière parfaitement consécutive. Si vous voulez une sortie consécutive,
+utilisez un seul 'asm'. De même, GCC effectuera des optimisations à travers une
+instruction 'asm' volatile; GCC n'oublie rien quand il rencontre une instruction
+'asm' volatile de la manière que d'autres compilateurs font.
+
+Une instruction 'asm' sans opérandes ou pollution (un 'asm' de vieux style) sera
+traitée de la même façon qu'une instruction 'asm' volatile.
+
+C'est une idée naturelle de chercher un moyen de donner accès aux codes de
+condition laissées par l'instruction assembleur. Cependant, quand nous avons
+essayé de l'implémenter, nous n'avons trouvé aucun moyen de le faire de manière
+fiable. Le problème est que les opérandes de sortie pourraient avoir besoin d'être
+rechargées, ce qui résulterait en des instructions 'store' supplémentaires. Sur la
+plupart des machines, ces instructions altéreraient les codes de condition avant
+qu'il soit temps de les tester. Ce problème ne se produit pas pour les instructions
+'test' et 'compare' car il n'y a pas d'opérandes de sortie.
+
+Pour des raisons similaires à celles décrites ci-dessus, il n'est pas possible
+de donner accès à une instruction assembleur aux codes de condition laissées par
+les instructions précédentes.
+
+Si vous écrivez un fichier d'entête qui pourrait être inclus dans des programmes
+ISO C, écrivez `__asm__' au lieu de `asm'. (Alternate Keywords). 
+

@@ -46,10 +46,8 @@ int main(void)
 	print("kernel : tr loaded\n");
 
 	/* Initialisation de la memoire */
-	//init_mm();
-        //get_page_directory();
-        //get_page_table();
-        //print("kernel : paging enable\n");
+	init_mm();
+        print("kernel : paging enable\n");
         
 	sti;
 	print("kernel : interrupts enable\n");
